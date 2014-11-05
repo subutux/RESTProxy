@@ -144,7 +144,7 @@ class RESTProxy {
 		 }
 		 // Get the raw GET request
 		 $tmp = explode('?',$_SERVER['REQUEST_URI']);
-		 if ($tmp[1]) {
+		 if (isset($tmp[1])) {
 		 	$this->_RawGET = $tmp[1];
 		 } else {
 		 	$this->_RawGET = "";
