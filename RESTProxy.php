@@ -1,4 +1,4 @@
-<?
+<?php
 /*
 COPYRIGHT
 
@@ -27,6 +27,30 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  * Rest API Proxy - Allowing cross domain json calls.
  * initial build for use with the opsview REST API in mind.
  */
+
+//look to http://php.net/manual/fr/function.getallheaders.php#99814
+if (!function_exists('apache_request_headers'))
+{
+    function apache_request_headers()
+    {
+       $headers = [];
+       foreach ($_SERVER as $name => $value)
+       {
+           if (substr($name, 0, 5) == 'HTTP_')
+           {
+               $headers[str_replace(' ', '-', (str_replace('_', ' ', substr($name, 5))))] = $value;
+           }
+           else{
+               $headers[$name]=$value;
+           }
+       }
+
+       $_SERVER['PATH_INFO'] = str_replace($_SERVER['SCRIPT_NAME'],'',$_SERVER['REQUEST_URI']);
+       $_SERVER['PATH_INFO'] = str_replace('?'.$_SERVER['QUERY_STRING'],'',$_SERVER['PATH_INFO']);
+       return $headers;
+    }
+}
+
 class RESTProxy {
 	private $_G;
 	private $_RawGET;
@@ -100,9 +124,9 @@ class RESTProxy {
 		// Fetch the request headers
 		$this->headers = apache_request_headers();
 		// Save the special x-RESTProxy-* headers
-		$this->Host = $this->headers['x-RESTProxy-Host'];
-		$this->Port = $this->headers['x-RESTProxy-Port'];
-		$this->Https = ($this->headers['x-RESTProxy-HTTPS'])? $this->headers['x-RESTProxy-HTTPS'] : false;
+		$this->Host = $this->headers['X-RESTPROXY-HOST'];
+		$this->Port = $this->headers['X-RESTPROXY-PORT'];
+		$this->Https = (isset($this->headers['X-RESTPROXY-HTTPS']))? $this->headers['X-RESTPROXY-HTTPS'] : false;
 		// Create a temp file in memory
 		$this->fp = fopen('php://temp/maxmemory:256000','w');
 		if (!$this->fp){
@@ -120,7 +144,7 @@ class RESTProxy {
 		 }
 		 // Get the raw GET request
 		 $tmp = explode('?',$_SERVER['REQUEST_URI']);
-		 if ($tmp[1]) {
+		 if (isset($tmp[1])) {
 		 	$this->_RawGET = $tmp[1];
 		 } else {
 		 	$this->_RawGET = "";
@@ -166,7 +190,7 @@ class RESTProxy {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		// Use the headers
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $curlHeaders);
-		
+
 		if ($_SERVER['REQUEST_METHOD'] != "GET"){
 			if ($_SERVER['REQUEST_METHOD'] == "POST"){
 				// Use the Curlopt_post instead of customrequest
@@ -176,7 +200,7 @@ class RESTProxy {
 				// The same for put
 				curl_setopt($ch, CURLOPT_PUT,true);
 			} else {
-				// Other requests (like DELETE), use a customrequest
+				// Other requlests (like DELETE), use a customrequest
 				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
 			}
 			// Send the content of the in-memory tempfile
