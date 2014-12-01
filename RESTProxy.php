@@ -200,7 +200,7 @@ class RESTProxy {
 				// The same for put
 				curl_setopt($ch, CURLOPT_PUT,true);
 			} else {
-				// Other requests (like DELETE), use a customrequest
+				// Other requlests (like DELETE), use a customrequest
 				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
 			}
 			// Send the content of the in-memory tempfile
